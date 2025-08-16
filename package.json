@@ -1,0 +1,16 @@
+{
+  "name": "webar-suitcase",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+"scripts": {
+  "dev": "vite"
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.179.1",
+    "vite": "^6.3.5"
+  }
+}
