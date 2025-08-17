@@ -1,17 +1,10 @@
 import * as THREE from 'three';
 import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
-// Camera
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.01,
-  20
-);
-
-// Renderer with XR enabled
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
@@ -24,24 +17,26 @@ document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['
 const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
 scene.add(light);
 
-// For testing before suitcase model: a small box
-const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-cube.visible = false; // Start hidden
-scene.add(cube);
+// Load suitcase model
+let suitcase = null;
+const loader = new GLTFLoader();
+loader.load('/models/suitcase.glb', (gltf) => {
+  suitcase = gltf.scene;
+  suitcase.visible = false;
+  suitcase.scale.set(0.3, 0.3, 0.3); // adjust size
+  scene.add(suitcase);
+});
 
-// Hit testing setup
+// Hit testing
 let hitTestSource = null;
-let localSpace = null;
 let hitTestSourceRequested = false;
 
 function animate(timestamp, frame) {
-  if (frame) {
+  if (frame && suitcase) {
     const referenceSpace = renderer.xr.getReferenceSpace();
     const session = renderer.xr.getSession();
 
-    if (hitTestSourceRequested === false) {
+    if (!hitTestSourceRequested) {
       session.requestReferenceSpace('viewer').then((space) => {
         session.requestHitTestSource({ space }).then((source) => {
           hitTestSource = source;
@@ -59,8 +54,13 @@ function animate(timestamp, frame) {
       if (hitTestResults.length) {
         const hit = hitTestResults[0];
         const pose = hit.getPose(referenceSpace);
-        cube.visible = true;
-        cube.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+
+        suitcase.visible = true;
+        suitcase.position.set(
+          pose.transform.position.x,
+          pose.transform.position.y,
+          pose.transform.position.z
+        );
       }
     }
   }
@@ -68,5 +68,4 @@ function animate(timestamp, frame) {
   renderer.render(scene, camera);
 }
 
-// Start AR render loop
 renderer.setAnimationLoop(animate);
