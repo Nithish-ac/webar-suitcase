@@ -23,16 +23,42 @@ const loader = new GLTFLoader();
 loader.load('/models/suitcase.glb', (gltf) => {
   suitcase = gltf.scene;
   suitcase.visible = false;
-  suitcase.scale.set(0.3, 0.3, 0.3); // adjust size
+  suitcase.scale.set(1, 1, 1);
   scene.add(suitcase);
+
+  // ✅ UI Handlers
+  document.getElementById('color-red').onclick = () => setColor(0xff0000);
+  document.getElementById('color-blue').onclick = () => setColor(0x0000ff);
+  document.getElementById('color-black').onclick = () => setColor(0x111111);
+
+  document.getElementById('size-small').onclick = () => setSize(0.5);
+  document.getElementById('size-medium').onclick = () => setSize(1);
+  document.getElementById('size-large').onclick = () => setSize(1.5);
 });
+
+function setColor(colorHex) {
+  if (!suitcase) return;
+  suitcase.traverse((child) => {
+    if (child.isMesh) {
+      child.material.color.setHex(colorHex);
+    }
+  });
+}
+
+function setSize(scale) {
+  if (!suitcase) return;
+  suitcase.scale.set(scale, scale, scale);
+}
+
 
 // Hit testing
 let hitTestSource = null;
 let hitTestSourceRequested = false;
 
+let placed = false; // track if already placed
+
 function animate(timestamp, frame) {
-  if (frame && suitcase) {
+  if (frame && suitcase && !placed) {
     const referenceSpace = renderer.xr.getReferenceSpace();
     const session = renderer.xr.getSession();
 
@@ -61,6 +87,8 @@ function animate(timestamp, frame) {
           pose.transform.position.y,
           pose.transform.position.z
         );
+
+        placed = true; // ✅ lock position after first placement
       }
     }
   }
